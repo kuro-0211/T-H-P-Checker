@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# 환경변수 (credentials)
+.env
+
 # SQLite DB files
 chellydb
 chellydb1

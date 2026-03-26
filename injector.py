@@ -6,21 +6,24 @@ LAMP MySQL에 랜덤 센서 데이터(temperature, humidity, pressure)를
 DB/테이블이 없으면 자동으로 생성합니다.
 """
 
+import os
 import random
 import time
+from dotenv import load_dotenv
+load_dotenv()
 from datetime import datetime, timezone, timedelta
 import mysql.connector
 from mysql.connector import Error
 
 KST = timezone(timedelta(hours=9))
 
-# ── 설정 ──────────────────────────────────────────────
+# ── 설정 (.env 또는 환경변수에서 읽음) ─────────────────
 DB_CONFIG = {
-    "host":     "localhost",
-    "port":     3306,
-    "user":     "chelly",        # MySQL 사용자명
-    "password": "jjk00jjk",            # MySQL 비밀번호
-    "database": "sensordb",
+    "host":     os.getenv("DB_HOST", "localhost"),
+    "port":     int(os.getenv("DB_PORT", 3306)),
+    "user":     os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME", "sensordb"),
 }
 INTERVAL = 5  # 초
 # ──────────────────────────────────────────────────────
