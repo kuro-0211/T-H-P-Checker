@@ -1,0 +1,279 @@
+[
+  {
+    "id": "tab_sensor",
+    "type": "tab",
+    "label": "Sensor Dashboard",
+    "disabled": false
+  },
+
+  {
+    "id": "inject1",
+    "type": "inject",
+    "z": "tab_sensor",
+    "name": "5초마다",
+    "repeat": "5",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 110,
+    "y": 200,
+    "wires": [["set_query"]]
+  },
+
+  {
+    "id": "set_query",
+    "type": "function",
+    "z": "tab_sensor",
+    "name": "쿼리 세팅",
+    "func": "msg.topic = 'SELECT temperature, humidity, pressure, created_at FROM sensor_data ORDER BY id DESC LIMIT 20';\nreturn msg;",
+    "outputs": 1,
+    "x": 270,
+    "y": 200,
+    "wires": [["mysql_select"]]
+  },
+
+  {
+    "id": "mysql_select",
+    "type": "mysql",
+    "z": "tab_sensor",
+    "name": "SELECT sensor_data",
+    "query": "",
+    "databaseConfig": "mysql_config",
+    "x": 450,
+    "y": 200,
+    "wires": [["parse_fn"]]
+  },
+
+  {
+    "id": "parse_fn",
+    "type": "function",
+    "z": "tab_sensor",
+    "name": "센서값 분기",
+    "func": "var row = msg.payload[0];\nif (!row) return [null, null, null, null, null, null];\nvar t = {payload: row.temperature, topic: 'temperature'};\nvar h = {payload: row.humidity,    topic: 'humidity'};\nvar p = {payload: row.pressure,    topic: 'pressure'};\nreturn [t, h, p, t, h, p];",
+    "outputs": 6,
+    "x": 650,
+    "y": 200,
+    "wires": [
+      ["gauge_temp"],
+      ["gauge_humid"],
+      ["gauge_press"],
+      ["chart_temp"],
+      ["chart_humid"],
+      ["chart_press"]
+    ]
+  },
+
+  {
+    "id": "gauge_temp",
+    "type": "ui_gauge",
+    "z": "tab_sensor",
+    "name": "Temperature",
+    "group": "group_sensor",
+    "order": 1,
+    "width": 4,
+    "height": 4,
+    "gtype": "gage",
+    "title": "Temperature",
+    "label": "°C",
+    "format": "{{value}}",
+    "min": 0,
+    "max": 100,
+    "colors": ["#00b4d8","#f4a261","#e63946"],
+    "seg1": 33,
+    "seg2": 66,
+    "x": 900,
+    "y": 80,
+    "wires": []
+  },
+
+  {
+    "id": "gauge_humid",
+    "type": "ui_gauge",
+    "z": "tab_sensor",
+    "name": "Humidity",
+    "group": "group_sensor",
+    "order": 2,
+    "width": 4,
+    "height": 4,
+    "gtype": "gage",
+    "title": "Humidity",
+    "label": "%",
+    "format": "{{value}}",
+    "min": 0,
+    "max": 100,
+    "colors": ["#90e0ef","#0077b6","#023e8a"],
+    "seg1": 33,
+    "seg2": 66,
+    "x": 900,
+    "y": 160,
+    "wires": []
+  },
+
+  {
+    "id": "gauge_press",
+    "type": "ui_gauge",
+    "z": "tab_sensor",
+    "name": "Pressure",
+    "group": "group_sensor",
+    "order": 3,
+    "width": 4,
+    "height": 4,
+    "gtype": "gage",
+    "title": "Pressure",
+    "label": "hPa",
+    "format": "{{value}}",
+    "min": 0,
+    "max": 100,
+    "colors": ["#b7e4c7","#52b788","#1b4332"],
+    "seg1": 33,
+    "seg2": 66,
+    "x": 900,
+    "y": 240,
+    "wires": []
+  },
+
+  {
+    "id": "chart_temp",
+    "type": "ui_chart",
+    "z": "tab_sensor",
+    "name": "Temperature 차트",
+    "group": "group_chart_temp",
+    "order": 1,
+    "width": 12,
+    "height": 5,
+    "label": "Temperature",
+    "chartType": "line",
+    "legend": "false",
+    "xformat": "HH:mm:ss",
+    "interpolate": "linear",
+    "nodata": "데이터 없음",
+    "ymin": "0",
+    "ymax": "100",
+    "removeOlder": 1,
+    "removeOlderPoints": "50",
+    "removeOlderUnit": "3600",
+    "cutout": 0,
+    "useOneColor": true,
+    "colors": ["#e63946"],
+    "x": 900,
+    "y": 340,
+    "wires": [[], []]
+  },
+
+  {
+    "id": "chart_humid",
+    "type": "ui_chart",
+    "z": "tab_sensor",
+    "name": "Humidity 차트",
+    "group": "group_chart_humid",
+    "order": 1,
+    "width": 12,
+    "height": 5,
+    "label": "Humidity",
+    "chartType": "line",
+    "legend": "false",
+    "xformat": "HH:mm:ss",
+    "interpolate": "linear",
+    "nodata": "데이터 없음",
+    "ymin": "0",
+    "ymax": "100",
+    "removeOlder": 1,
+    "removeOlderPoints": "50",
+    "removeOlderUnit": "3600",
+    "cutout": 0,
+    "useOneColor": true,
+    "colors": ["#0077b6"],
+    "x": 900,
+    "y": 420,
+    "wires": [[], []]
+  },
+
+  {
+    "id": "chart_press",
+    "type": "ui_chart",
+    "z": "tab_sensor",
+    "name": "Pressure 차트",
+    "group": "group_chart_press",
+    "order": 1,
+    "width": 12,
+    "height": 5,
+    "label": "Pressure",
+    "chartType": "line",
+    "legend": "false",
+    "xformat": "HH:mm:ss",
+    "interpolate": "linear",
+    "nodata": "데이터 없음",
+    "ymin": "0",
+    "ymax": "100",
+    "removeOlder": 1,
+    "removeOlderPoints": "50",
+    "removeOlderUnit": "3600",
+    "cutout": 0,
+    "useOneColor": true,
+    "colors": ["#52b788"],
+    "x": 900,
+    "y": 500,
+    "wires": [[], []]
+  },
+
+  {
+    "id": "mysql_config",
+    "type": "MySQLdatabase",
+    "name": "sensordb",
+    "host": "127.0.0.1",
+    "port": "3306",
+    "db": "sensordb",
+    "tz": ""
+  },
+
+  {
+    "id": "group_sensor",
+    "type": "ui_group",
+    "name": "실시간 센서값",
+    "tab": "ui_tab_sensor",
+    "order": 1,
+    "disp": true,
+    "width": "12"
+  },
+
+  {
+    "id": "group_chart_temp",
+    "type": "ui_group",
+    "name": "Temperature 그래프",
+    "tab": "ui_tab_sensor",
+    "order": 2,
+    "disp": true,
+    "width": "12"
+  },
+
+  {
+    "id": "group_chart_humid",
+    "type": "ui_group",
+    "name": "Humidity 그래프",
+    "tab": "ui_tab_sensor",
+    "order": 3,
+    "disp": true,
+    "width": "12"
+  },
+
+  {
+    "id": "group_chart_press",
+    "type": "ui_group",
+    "name": "Pressure 그래프",
+    "tab": "ui_tab_sensor",
+    "order": 4,
+    "disp": true,
+    "width": "12"
+  },
+
+  {
+    "id": "ui_tab_sensor",
+    "type": "ui_tab",
+    "name": "Sensor Monitor",
+    "icon": "dashboard",
+    "order": 1
+  }
+]

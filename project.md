@@ -55,18 +55,47 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    A[inject 노드\n5초 interval] --> B[MySQL 노드\nSELECT 최신 1건]
-    B --> C[function 노드\n데이터 파싱]
-    C --> D[gauge 노드\ntemperature]
-    C --> E[gauge 노드\nhumidity]
-    C --> F[gauge 노드\npressure]
-    C --> G[chart 노드\n시계열 그래프]
+    A[inject\n5초 interval] --> B[function\n쿼리 세팅]
+    B --> C[MySQL\nSELECT LIMIT 20]
+    C --> D[function\n센서값 분기\n6 outputs]
+    D -->|out1| E[gauge\nTemperature]
+    D -->|out2| F[gauge\nHumidity]
+    D -->|out3| G[gauge\nPressure]
+    D -->|out4| H[chart\nTemperature 개별]
+    D -->|out5| I[chart\nHumidity 개별]
+    D -->|out6| J[chart\nPressure 개별]
 ```
 
-**Node-RED 주요 설정**
-- MySQL 노드: `localhost`, `sensordb`, user/password 설정
-- inject 노드: repeat interval = 5초
-- 대시보드 접속: `http://localhost:1880/ui`
+### 설치 필요 팔레트
+
+Node-RED 메뉴 → **Manage palette** → Install 탭에서 설치:
+
+```
+node-red-dashboard
+node-red-node-mysql
+```
+
+### Flow import 방법
+
+1. Node-RED 우상단 메뉴 → **Import**
+2. `nodered-flow.json` 파일 내용 붙여넣기 → **Import** 클릭
+3. MySQL 노드 더블클릭 → Database 설정에서 user/password 입력 후 **Update**
+4. **Deploy** 클릭
+
+### 노드별 설정 상세
+
+| 노드 | 설정값 |
+|------|--------|
+| inject | Repeat: interval / every **5** seconds |
+| MySQL | Host: `127.0.0.1`, Port: `3306`, Database: `sensordb` |
+| gauge × 3 | Min: `0`, Max: `100`, Tab: Sensor Monitor |
+| ui_chart | Type: Line, Y-axis 0~100, Remove older: 1시간 |
+
+### 대시보드 접속
+
+```
+http://localhost:1880/ui
+```
 
 ---
 
@@ -80,11 +109,34 @@ flowchart LR
     D --> E[실시간 그래프\n자동 새로고침 5s]
 ```
 
+**Grafana 패널 쿼리 (각 패널 개별 적용)**
+
+Temperature:
+```sql
+SELECT created_at AS time, temperature AS value
+FROM sensor_data WHERE created_at >= NOW() - INTERVAL 1 HOUR
+ORDER BY created_at ASC
+```
+Humidity:
+```sql
+SELECT created_at AS time, humidity AS value
+FROM sensor_data WHERE created_at >= NOW() - INTERVAL 1 HOUR
+ORDER BY created_at ASC
+```
+Pressure:
+```sql
+SELECT created_at AS time, pressure AS value
+FROM sensor_data WHERE created_at >= NOW() - INTERVAL 1 HOUR
+ORDER BY created_at ASC
+```
+
 **Grafana 주요 설정**
 - Data Source: MySQL, Host=`localhost:3306`, Database=`sensordb`
-- Panel Type: Time series
+- Panel Type: Time series (개별 3패널)
+- Format: Time series
 - Auto refresh: 5s
 - 접속: `http://localhost:3000`
+- 참고: `$__timeFilter` 대신 `NOW() - INTERVAL 1 HOUR` 사용 (KST 저장으로 인한 시간대 문제)
 
 ---
 
